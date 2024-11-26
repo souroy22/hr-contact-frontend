@@ -8,6 +8,7 @@ export const roleOptions = [
 ];
 
 export const cities = [
+  { label: "Remote", value: "Remote" },
   { label: "Mumbai", value: "Mumbai" },
   { label: "Delhi", value: "Delhi" },
   { label: "Bengaluru", value: "Bengaluru" },
