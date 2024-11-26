@@ -14,6 +14,7 @@ type PROP_TYPE = {
   placeholder?: string;
   required?: boolean;
   options?: Option[];
+  selectedOption: Option;
   style?: CSSProperties;
 };
 
@@ -23,12 +24,14 @@ const LocationDropdown = ({
   placeholder,
   required,
   options,
+  selectedOption,
   style = {},
 }: PROP_TYPE) => {
   const [cityOptions] = useState<Option[]>(cities);
 
   return (
     <Select
+      value={selectedOption}
       options={options ?? cityOptions}
       onChange={(selectedOption: Option | null) =>
         onLocationChange(selectedOption?.value || "")

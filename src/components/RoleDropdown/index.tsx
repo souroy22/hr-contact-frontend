@@ -14,6 +14,7 @@ type PROP_TYPE = {
   required?: boolean;
   style?: CSSProperties;
   options?: Option[];
+  selectedOption: Option;
 };
 
 const RoleDropdown = ({
@@ -23,9 +24,11 @@ const RoleDropdown = ({
   required,
   options,
   style = {},
+  selectedOption,
 }: PROP_TYPE) => {
   return (
     <Select
+      value={selectedOption}
       options={options ?? roleOptions}
       onChange={(selectedOption) => onRoleChange(selectedOption?.value || "")}
       placeholder={`${placeholder ?? "Select a role"}${required ? "*" : ""}`}

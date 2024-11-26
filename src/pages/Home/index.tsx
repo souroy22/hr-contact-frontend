@@ -7,6 +7,7 @@ import { Box, IconButton, InputAdornment, TextField } from "@mui/material";
 import RoleDropdown from "../../components/RoleDropdown";
 import LocationDropdown from "../../components/LocationDropdown";
 import { cities, roleOptions } from "../../assets/data/cities";
+import { useLocation, useNavigate } from "react-router-dom";
 
 type NEW_CONTACT_TYPE = {
   name: string;
@@ -23,6 +24,9 @@ const Home: FC = () => {
   const [selectedLocation, setSelectedLocation] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
   const [loadingData, setLoadingData] = useState(false);
+
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const addHRData = async (newData: NEW_CONTACT_TYPE) => {
     await axios.post(
@@ -51,11 +55,30 @@ const Home: FC = () => {
     }
   };
 
+  const updateQueryParams = (
+    searchQuery: string,
+    role: string,
+    newLocation: string
+  ) => {
+    const searchParams = new URLSearchParams();
+
+    if (searchQuery.trim()) searchParams.set("query", searchQuery);
+    if (role) searchParams.set("role", role);
+    if (newLocation) searchParams.set("location", newLocation);
+
+    // Navigate to the updated URL
+    navigate({
+      pathname: location.pathname,
+      search: searchParams.toString(),
+    });
+  };
+
   const fetchHRData = async (
     searchQuery: string = "",
     role: string = "",
     location: string = ""
   ) => {
+    updateQueryParams(searchQuery, role, location);
     setLoadingData(true);
     const params: any = {};
     if (searchQuery) {
@@ -102,8 +125,33 @@ const Home: FC = () => {
     await fetchHRData(value, selectedRole, newVal);
   };
 
+  const onLoad = () => {
+    const queryParams = new URLSearchParams(location.search);
+    const query = queryParams.get("query") || "";
+    const role = queryParams.get("role") || "";
+    const newLocation = queryParams.get("location") || "";
+
+    setValue(query);
+    setSelectedRole(role);
+    setSelectedLocation(newLocation);
+
+    fetchHRData(query, role, newLocation);
+  };
+
+  const getRole = (value: string): { label: string; value: string } => {
+    const role = roleOptions.find(
+      (option) => option.value === value.toUpperCase()
+    );
+    return role ?? { label: "Any Role", value: "any" };
+  };
+
+  const getLocation = (value: string): { label: string; value: string } => {
+    const role = cities.find((option) => option.value === value);
+    return role ?? { label: "Anywhere", value: "any" };
+  };
+
   useEffect(() => {
-    fetchHRData();
+    onLoad();
   }, []);
 
   return (
@@ -154,12 +202,14 @@ const Home: FC = () => {
           />
         </Box>
         <RoleDropdown
+          selectedOption={getRole(selectedRole)}
           placeholder="Any Role"
           onRoleChange={onSelectRole}
           options={[{ label: "Any Role", value: "any" }, ...roleOptions]}
           style={{ width: "200px" }}
         />
         <LocationDropdown
+          selectedOption={getLocation(selectedLocation)}
           placeholder="Anywhere"
           onLocationChange={onSelectLocation}
           options={[{ label: "Anywhere", value: "any" }, ...cities]}

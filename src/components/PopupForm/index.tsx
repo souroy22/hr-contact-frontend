@@ -2,6 +2,7 @@ import { FC, useState } from "react";
 import LocationDropdown from "../LocationDropdown";
 import RoleDropdown from "../RoleDropdown";
 import { Box, CircularProgress, ClickAwayListener } from "@mui/material";
+import { cities, roleOptions } from "../../assets/data/cities";
 
 interface PopupFormProps {
   open: boolean;
@@ -55,6 +56,18 @@ const PopupForm: FC<PopupFormProps> = ({ open, onClose, onSave }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const getRoleLabel = (value: string): { label: string; value: string } => {
+    const role = roleOptions.find(
+      (option) => option.value === value.toUpperCase()
+    );
+    return role ?? { label: "", value: "" };
+  };
+
+  const getLocation = (value: string): { label: string; value: string } => {
+    const role = cities.find((option) => option.value === value);
+    return role ?? { label: "", value: "" };
   };
 
   if (!open) return null;
@@ -123,6 +136,7 @@ const PopupForm: FC<PopupFormProps> = ({ open, onClose, onSave }) => {
           </Box>
           <Box className="input-wrapper">
             <LocationDropdown
+              selectedOption={getLocation(location)}
               onLocationChange={(value) => {
                 setLocation(value);
                 setErrors({ ...errors, location: "" });
@@ -134,6 +148,7 @@ const PopupForm: FC<PopupFormProps> = ({ open, onClose, onSave }) => {
           </Box>
           <Box className="input-wrapper">
             <RoleDropdown
+              selectedOption={getRoleLabel(role)}
               required
               onRoleChange={(value) => {
                 setRole(value);
