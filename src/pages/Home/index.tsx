@@ -3,7 +3,13 @@ import PopupForm from "../../components/PopupForm";
 import DataTable from "../../components/DataTable";
 import axios from "axios";
 import { notification } from "../../configs/notification.config";
-import { Box, IconButton, InputAdornment, TextField } from "@mui/material";
+import {
+  Box,
+  IconButton,
+  InputAdornment,
+  Pagination,
+  TextField,
+} from "@mui/material";
 import RoleDropdown from "../../components/RoleDropdown";
 import LocationDropdown from "../../components/LocationDropdown";
 import { cities, roleOptions } from "../../assets/data/cities";
@@ -25,6 +31,8 @@ const Home: FC = () => {
   const [selectedLocation, setSelectedLocation] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
   const [loadingData, setLoadingData] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -59,13 +67,17 @@ const Home: FC = () => {
   const updateQueryParams = (
     searchQuery: string,
     role: string,
-    newLocation: string
+    newLocation: string,
+    page: number
   ) => {
     const searchParams = new URLSearchParams();
 
     if (searchQuery.trim()) searchParams.set("query", searchQuery);
     if (role) searchParams.set("role", role);
     if (newLocation) searchParams.set("location", newLocation);
+    if (page && page !== 1) {
+      searchParams.set("page", String(page));
+    }
 
     // Navigate to the updated URL
     navigate({
@@ -77,9 +89,10 @@ const Home: FC = () => {
   const fetchHRData = async (
     searchQuery: string = "",
     role: string = "",
-    location: string = ""
+    location: string = "",
+    page: number = 1
   ) => {
-    updateQueryParams(searchQuery, role, location);
+    updateQueryParams(searchQuery, role, location, page);
     setLoadingData(true);
     const params: any = {};
     if (searchQuery) {
@@ -91,11 +104,13 @@ const Home: FC = () => {
     if (location) {
       params["location"] = location;
     }
+    params["page"] = page;
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_LOCAL_BASE_URL}/api/v1/contact/all`,
         { params }
       );
+      setTotalPages(response.data.totalPages);
       setData(response.data.data);
     } catch (err) {
       console.error(err);
@@ -134,10 +149,12 @@ const Home: FC = () => {
     const query = queryParams.get("query") || "";
     const role = queryParams.get("role") || "";
     const newLocation = queryParams.get("location") || "";
+    const queryPage = queryParams.get("page") || 1;
 
     setValue(query);
     setSelectedRole(role);
     setSelectedLocation(newLocation);
+    setCurrentPage(Number(queryPage));
 
     fetchHRData(query, role, newLocation);
   };
@@ -152,6 +169,14 @@ const Home: FC = () => {
   const getLocation = (value: string): { label: string; value: string } => {
     const role = cities.find((option) => option.value === value);
     return role ?? { label: "Anywhere", value: "any" };
+  };
+
+  const handlePageChange = async (
+    _: React.ChangeEvent<unknown>,
+    currPage: number
+  ) => {
+    setCurrentPage(currPage);
+    await fetchHRData(value, selectedRole, selectedLocation, currPage);
   };
 
   useEffect(() => {
@@ -229,6 +254,23 @@ const Home: FC = () => {
         onClose={() => setIsPopupOpen(false)}
         onSave={handleAddData}
       />
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          flexWrap: "wrap",
+          alignItems: "center",
+          marginTop: "20px",
+        }}
+      >
+        <Pagination
+          page={currentPage}
+          count={totalPages}
+          variant="outlined"
+          color="secondary"
+          onChange={handlePageChange}
+        />
+      </Box>
     </Box>
   );
 };

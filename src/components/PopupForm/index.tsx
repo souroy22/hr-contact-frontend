@@ -110,8 +110,11 @@ const PopupForm: FC<PopupFormProps> = ({ open, onClose, onSave }) => {
               placeholder="Contact Number*"
               value={contactNumber}
               onChange={(e) => {
-                setContactNumber(e.target.value);
-                setErrors({ ...errors, contactNumber: "" });
+                const value = e.target.value;
+                if (/^\d{0,10}$/.test(value)) {
+                  setContactNumber(value);
+                  setErrors({ ...errors, contactNumber: "" });
+                }
               }}
               style={{ borderColor: errors.contactNumber ? "red" : "" }}
             />
