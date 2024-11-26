@@ -1,42 +1,21 @@
-import { FC, useEffect } from "react";
-import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
-import useThemeMode from "./hooks/useThemeMode";
+import { FC } from "react";
 import RouterComponent from "./routers/router";
-import "./App.css";
 import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import { notification } from "./configs/notification.config";
-// import { useDispatch } from "react-redux";
-// import { setUserData } from "./store/user/userReducer";
+import "./App.css";
+import { createTheme, ThemeProvider } from "@mui/material";
 
 const App: FC = () => {
-  const { theme } = useThemeMode();
-
-  // const dispatch = useDispatch();
-
-  const muiTheme = createTheme({
+  const theme = createTheme({
     palette: {
-      mode: theme as "light" | "dark",
+      action: {
+        hover: "#f0f0f0", // Ensure hover color is set here
+      },
     },
   });
 
-  const onLoad = async () => {
-    try {
-      //
-    } catch (error) {
-      if (error instanceof Error) {
-        notification.error(error.message);
-      }
-    }
-  };
-
-  useEffect(() => {
-    onLoad();
-  }, []);
-
   return (
-    <ThemeProvider theme={muiTheme}>
-      <CssBaseline />
+    <ThemeProvider theme={theme}>
       <Toaster />
       <BrowserRouter>
         <RouterComponent />

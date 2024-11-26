@@ -1,8 +1,182 @@
-import { Box } from "@mui/material";
-import "./style.css";
+import { ChangeEvent, FC, useEffect, useState } from "react";
+import PopupForm from "../../components/PopupForm";
+import DataTable from "../../components/DataTable";
+import axios from "axios";
+import { notification } from "../../configs/notification.config";
+import { Box, IconButton, InputAdornment, TextField } from "@mui/material";
+import RoleDropdown from "../../components/RoleDropdown";
+import LocationDropdown from "../../components/LocationDropdown";
+import { cities, roleOptions } from "../../assets/data/cities";
 
-const Home = () => {
-  return <Box>Home</Box>;
+type NEW_CONTACT_TYPE = {
+  name: string;
+  contactNumber: string;
+  companyName: string;
+  role: string;
+  location: string;
+};
+
+const Home: FC = () => {
+  const [data, setData] = useState<NEW_CONTACT_TYPE[]>([]);
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [value, setValue] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState("");
+  const [selectedRole, setSelectedRole] = useState("");
+  const [loadingData, setLoadingData] = useState(false);
+
+  const addHRData = async (newData: NEW_CONTACT_TYPE) => {
+    await axios.post(
+      `${import.meta.env.VITE_LOCAL_BASE_URL}/api/v1/contact/create`,
+      { ...newData }
+    );
+  };
+
+  const handleAddData = async (newData: NEW_CONTACT_TYPE) => {
+    try {
+      setData([...data, newData]);
+      await addHRData({
+        ...newData,
+        companyName: newData.companyName,
+        contactNumber: newData.contactNumber,
+      });
+      setData([...data, newData]);
+      setIsPopupOpen(false);
+      notification.success("New contact added successfully!");
+    } catch (error) {
+      if (error instanceof Error) {
+        console.log(`Error: ${error.message}`);
+        notification.error(error.message);
+        throw new Error(error.message);
+      }
+    }
+  };
+
+  const fetchHRData = async (
+    searchQuery: string = "",
+    role: string = "",
+    location: string = ""
+  ) => {
+    setLoadingData(true);
+    const params: any = {};
+    if (searchQuery) {
+      params["searchQuery"] = searchQuery;
+    }
+    if (role) {
+      params["role"] = role;
+    }
+    if (location) {
+      params["location"] = location;
+    }
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_LOCAL_BASE_URL}/api/v1/contact/all`,
+        { params }
+      );
+      setData(response.data.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  const onClear = async () => {
+    setValue("");
+    await fetchHRData("", selectedRole, selectedLocation);
+  };
+
+  const searchContact = (event: ChangeEvent<HTMLInputElement>) => {
+    setValue(event.target.value);
+    fetchHRData(event.target.value);
+  };
+
+  const onSelectRole = async (newVal: string) => {
+    newVal = newVal === "any" ? "" : newVal;
+    setSelectedRole(newVal);
+    await fetchHRData(value, newVal, selectedLocation);
+  };
+
+  const onSelectLocation = async (newVal: string) => {
+    newVal = newVal === "any" ? "" : newVal;
+    setSelectedLocation(newVal);
+    await fetchHRData(value, selectedRole, newVal);
+  };
+
+  useEffect(() => {
+    fetchHRData();
+  }, []);
+
+  return (
+    <Box className="app-container">
+      <Box sx={{ display: "flex", gap: "30px" }}>
+        <Box sx={{ width: "50%", display: "flex", justifyContent: "flex-end" }}>
+          <TextField
+            value={value}
+            placeholder="Search..."
+            onChange={searchContact}
+            variant="outlined"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  {value ? (
+                    <IconButton
+                      onClick={onClear}
+                      edge="end"
+                      aria-label="clear"
+                      sx={{ fontSize: "10px" }}
+                    >
+                      ✖️
+                    </IconButton>
+                  ) : (
+                    "🔍"
+                  )}
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                height: "40px",
+                borderRadius: "10px",
+                backgroundColor: "#f9f9f9",
+                width: "300px",
+                "&:hover fieldset": {
+                  borderColor: "#888",
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "#007BFF",
+                  boxShadow: "0 0 10px rgba(0, 123, 255, 0.25)",
+                },
+              },
+              "& .MuiInputBase-input": {
+                paddingLeft: "10px", // Space for the icon
+              },
+            }}
+          />
+        </Box>
+        <RoleDropdown
+          placeholder="Any Role"
+          onRoleChange={onSelectRole}
+          options={[{ label: "Any Role", value: "any" }, ...roleOptions]}
+          style={{ width: "200px" }}
+        />
+        <LocationDropdown
+          placeholder="Anywhere"
+          onLocationChange={onSelectLocation}
+          options={[{ label: "Anywhere", value: "any" }, ...cities]}
+          style={{ width: "200px" }}
+        />
+        <button onClick={() => setIsPopupOpen(true)} className="open-popup-btn">
+          Add HR Data
+        </button>
+      </Box>
+      <DataTable data={data} searchQuery={value} isLoading={loadingData} />
+      <PopupForm
+        open={isPopupOpen}
+        onClose={() => setIsPopupOpen(false)}
+        onSave={handleAddData}
+      />
+    </Box>
+  );
 };
 
 export default Home;
