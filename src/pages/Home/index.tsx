@@ -8,6 +8,7 @@ import RoleDropdown from "../../components/RoleDropdown";
 import LocationDropdown from "../../components/LocationDropdown";
 import { cities, roleOptions } from "../../assets/data/cities";
 import { useLocation, useNavigate } from "react-router-dom";
+import useDebounce from "../../hooks/useDebounce";
 
 type NEW_CONTACT_TYPE = {
   name: string;
@@ -108,9 +109,12 @@ const Home: FC = () => {
     await fetchHRData("", selectedRole, selectedLocation);
   };
 
+  const debounceFetchHrDataFn = useDebounce(fetchHRData);
+
   const searchContact = (event: ChangeEvent<HTMLInputElement>) => {
     setValue(event.target.value);
-    fetchHRData(event.target.value);
+    setLoadingData(true);
+    debounceFetchHrDataFn(event.target.value);
   };
 
   const onSelectRole = async (newVal: string) => {
